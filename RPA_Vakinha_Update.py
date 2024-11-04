@@ -4,12 +4,11 @@
 #IMPORTS:
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from time import sleep
 from selenium import webdriver
 import psycopg2 as pg
 import os
 from dotenv import load_dotenv
-import sys
+from time import sleep
 
 #--------------------------------------------------------------------------
 
@@ -27,8 +26,15 @@ conn = pg.connect(
 )
 cursor = conn.cursor()
 #--------------------------------------------------------------------------
-def inserindo_dados(link_vakinha, id_pet, id_user):
-    #Iniciando RPA para pegar as informações da vakinha do link:
+
+#Função que atualiza as informações de cada vakinha:
+def atualizando_dados(link_vakinha):
+    #Explicação do que é cada parametro:
+    '''
+    - link_vakinha = link da vakinha que deverá ser atualizada.
+    - id_pet = id do pet que a vakinha é relacionada.
+    - id_user = id do user que é dono do pet.
+    '''
 
     #Entrando no link:
     #Definindo para abrir a página Web em segundo plano:
@@ -47,15 +53,6 @@ def inserindo_dados(link_vakinha, id_pet, id_user):
     #--------------------------------------------------------------------------
     #Pegando as informações necessários com o XPATH:
 
-    #Obtendo título da vakinha:
-    title = str(driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[1]/div/div/h1').text)
-
-    #Obtendo a imagem da vakinha:
-    image_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[1]/div/a/div/picture/div/img')
-
-    #Obetando descrição da vakinha:
-    description = str(driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[3]/div[2]/div/div[4]').text)
-
     #Obtendo o valor arrecado na vakinha:
     total_donated_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[2]/div/div/div/div[3]/div/span').text
 
@@ -68,10 +65,6 @@ def inserindo_dados(link_vakinha, id_pet, id_user):
     #--------------------------------------------------------------------------
     #Tratando os dados extraidos:
 
-    #Tratando o campo imagem:
-    image = str(image_temp.get_attribute('src'))
-
-    #-------------------------------------------------------------
     #Tratando o campo total_donated:
     #Substituindo "R$" por vazio:
     total_donated_temp = total_donated_temp.replace("R$ ", "")
@@ -104,8 +97,8 @@ def inserindo_dados(link_vakinha, id_pet, id_user):
 
     #--------------------------------------------------------------------------
     #Inserindo os dados no banco:
-    #Executando procedure para inserir os dados no banco:
-    cursor.execute("CALL insert_vakinha(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (id_pet, title, link_vakinha, total_donated, goal_amount, supporters_amount, total_percentage, description, image, id_user))
+    #Executando procedure para atualizar o banco passando os valores atualizados:
+    cursor.execute("CALL update_vakinha(%s, %s, %s, %s, %s)", (link_vakinha, total_donated, goal_amount, supporters_amount, total_percentage))
 
     #Comitando:
     conn.commit()
@@ -114,6 +107,15 @@ def inserindo_dados(link_vakinha, id_pet, id_user):
     cursor.close()
     conn.close()
 
-if len(sys.argv) > 1:
-    values = sys.argv
-    inserindo_dados(values[1], values[2], values[3])
+
+#Lendo o link de todas as vakinhas que estão no banco:
+cursor.execute("SELECT link FROM vakinha")
+tabela = cursor.fetchall()[0]
+
+#Percorrendo cada link para atualizar os valores:
+for i in tabela:
+    #Passando o link da vakinha que deve ser atualizado para a função de atualização:
+    atualizando_dados(i)
+
+    #Dando um tempo entre as atualizações:
+    sleep(3)
