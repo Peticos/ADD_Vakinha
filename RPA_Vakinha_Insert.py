@@ -10,7 +10,6 @@ import psycopg2 as pg
 import os
 from dotenv import load_dotenv
 import sys
-
 #--------------------------------------------------------------------------
 
 #Pegando a senha do banco no .env:
@@ -27,6 +26,7 @@ conn = pg.connect(
 )
 cursor = conn.cursor()
 #--------------------------------------------------------------------------
+
 def inserindo_dados(link_vakinha, id_pet, id_user):
     #Iniciando RPA para pegar as informações da vakinha do link:
 
@@ -47,23 +47,26 @@ def inserindo_dados(link_vakinha, id_pet, id_user):
     #--------------------------------------------------------------------------
     #Pegando as informações necessários com o XPATH:
 
-    #Obtendo título da vakinha:
-    title = str(driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[1]/div/div/h1').text)
+    try:
+        #Obtendo título da vakinha:
+        title = str(driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[1]/div/div/h1').text)
 
-    #Obtendo a imagem da vakinha:
-    image_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[1]/div/a/div/picture/div/img')
+        #Obtendo a imagem da vakinha:
+        image_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[1]/div/a/div/picture/div/img')
 
-    #Obetando descrição da vakinha:
-    description = str(driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[3]/div[2]/div/div[4]').text)
+        #Obetando descrição da vakinha:
+        description = str(driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[3]/div[2]/div/div[4]').text)
 
-    #Obtendo o valor arrecado na vakinha:
-    total_donated_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[2]/div/div/div/div[3]/div/span').text
+        #Obtendo o valor arrecado na vakinha:
+        total_donated_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[2]/div/div/div/div[3]/div/span').text
 
-    #Obtendo a meta da vakinha:
-    goal_amount_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[2]/div/div/div/div[3]/div/div[3]/span').text
+        #Obtendo a meta da vakinha:
+        goal_amount_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[2]/div/div/div/div[3]/div/div[3]/span').text
 
-    #Obtendo a quantidade de pessoas que já doaram:
-    supporters_amount_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[2]/div/div/div/div[3]/div/div[4]/span').text
+        #Obtendo a quantidade de pessoas que já doaram:
+        supporters_amount_temp = driver_vakinha.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div[2]/div/div/div/div[3]/div/div[4]/span').text
+    except:
+        return 'Não foi possível inserir essa vakinha'
 
     #--------------------------------------------------------------------------
     #Tratando os dados extraidos:
@@ -114,6 +117,9 @@ def inserindo_dados(link_vakinha, id_pet, id_user):
     cursor.close()
     conn.close()
 
+#Verifica se os parametros da função foram passados corretamente:
 if len(sys.argv) > 1:
+    #Lista com os parametros:
     values = sys.argv
+    #Chamando a função:
     inserindo_dados(values[1], values[2], values[3])
